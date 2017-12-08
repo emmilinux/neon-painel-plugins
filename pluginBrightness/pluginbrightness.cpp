@@ -1,12 +1,11 @@
 #include "pluginbrightness.h"
 
 
-void setBrightness(double bright)
+void setBrightness(int bright)
 {
     Display *display = XOpenDisplay(NULL);
     static Atom backlight = XInternAtom (display, "Backlight", True);
     int screen = 0, o = 0;
-    //Window root = RootWindow(display, screen);
     Window root = DefaultRootWindow(display);
     XRRScreenResources *resources = XRRGetScreenResources(display, root);
     RROutput output = resources->outputs[o];
@@ -19,31 +18,48 @@ void setBrightness(double bright)
     XFree(info);
     XRRFreeScreenResources(resources);
 
-    value = bright * (max - min) + min;
+    bright = (bright * max) / 100;
+
+    value = QString::number(bright).toInt();
 
     XRRChangeOutputProperty(display, output, backlight, XA_INTEGER,
                             32, PropModeReplace, (unsigned char *) &value, 1);
 
     XFlush(display);
-    //XSync(display, False);
 }
 
-double getBrightness()
+int getBrightness()
 {
-    Display *display = XOpenDisplay(NULL);
-    static Atom backlight = XInternAtom (display, "Backlight", True);
-    int screen = 0, o = 0;
-    //Window root = RootWindow(display, screen);
-    Window root = DefaultRootWindow(display);
-    XRRScreenResources *resources = XRRGetScreenResources(display, root);
-    RROutput output = resources->outputs[o];
-    XRRPropertyInfo *info = XRRQueryOutputProperty(display, output, backlight);
-    double min, max;
-    long value;
+    QString path = "/sys/class/backlight/";
+    QDir dir(path);
+    QFileInfoList infolist = dir.entryInfoList(QDir::Dirs | QDir::NoDot | QDir::NoDotAndDotDot);
 
-    qDebug() << info->values;
+    QFile f(path + infolist.at(0).fileName() + "/brightness");
 
-    XFree(info);
+    if(f.open(QFile::ReadOnly))
+    {
+        return f.readLine().replace("\n", "").toInt();
+    }
+    else
+    {
+        return 0;
+    }
+}
 
-    return 1.0;
+int maxBrightness()
+{
+    QString path = "/sys/class/backlight/";
+    QDir dir(path);
+    QFileInfoList infolist = dir.entryInfoList(QDir::Dirs | QDir::NoDot | QDir::NoDotAndDotDot);
+
+    QFile f(path + infolist.at(0).fileName() + "/max_brightness");
+
+    if(f.open(QFile::ReadOnly))
+    {
+        return f.readLine().replace("\n", "").toInt();
+    }
+    else
+    {
+        return 0;
+    }
 }
