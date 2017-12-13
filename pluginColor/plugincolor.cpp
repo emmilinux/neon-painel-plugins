@@ -1,9 +1,10 @@
 #include "plugincolor.h"
 
 
-QString changeDatail(int hue, QString n)
+QString changeDatail(int hue, QString light)
 {
     QColor color;
-    color = color.fromHsl(hue, 255, 115, 255);
+    //115
+    color = color.fromHsl(hue, 255, light.toInt(), 255);
     return color.name();
 }
